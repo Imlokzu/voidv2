@@ -1,0 +1,8 @@
+{
+  "functions": {
+    "api/spotify-playlist.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  }
+}

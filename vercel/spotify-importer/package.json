@@ -1,0 +1,14 @@
+{
+  "name": "void-spotify-importer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel deploy"
+  },
+  "dependencies": {
+    "@sparticuz/chromium": "^137.0.1",
+    "puppeteer-core": "^24.11.2"
+  }
+}
