@@ -3,7 +3,11 @@ package com.maxrave.simpmusic.ui.component
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -12,6 +16,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.horizontalScroll
@@ -95,6 +101,9 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
@@ -1629,14 +1638,36 @@ fun NowPlayingBottomSheet(
             scrimColor = Color.Black.copy(alpha = .5f),
             contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
         ) {
-            Card(
+            Box(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .wrapContentHeight(),
-                shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
-                colors = CardDefaults.cardColors().copy(containerColor = Color(0xFF242424)),
+                        .wrapContentHeight()
+                        .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)),
             ) {
+                // Blurred album art background
+                AsyncImage(
+                    model =
+                        ImageRequest
+                            .Builder(LocalPlatformContext.current)
+                            .data(uiState.songUIState.thumbnails)
+                            .diskCachePolicy(CachePolicy.ENABLED)
+                            .diskCacheKey(uiState.songUIState.thumbnails)
+                            .crossfade(550)
+                            .build(),
+                    placeholder = painterResource(Res.drawable.holder),
+                    error = painterResource(Res.drawable.holder),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize().blur(40.dp),
+                )
+                // Dark overlay
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(Color(0xCC0A0A0F))
+                )
+                // Content
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.verticalScroll(rememberScrollState()),
@@ -1649,17 +1680,16 @@ fun NowPlayingBottomSheet(
                                 .height(4.dp),
                         colors =
                             CardDefaults.cardColors().copy(
-                                containerColor = Color(0xFF474545),
+                                containerColor = Color(0x4DFFFFFF),
                             ),
                         shape = RoundedCornerShape(50),
                     ) {}
-                    Spacer(modifier = Modifier.height(5.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     Row(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .height(65.dp)
-                                .padding(10.dp),
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         val thumb = uiState.songUIState.thumbnails
@@ -1679,14 +1709,16 @@ fun NowPlayingBottomSheet(
                             modifier =
                                 Modifier
                                     .align(Alignment.CenterVertically)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .size(60.dp),
+                                    .shadow(8.dp, RoundedCornerShape(16.dp))
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .size(72.dp),
                         )
-                        Spacer(modifier = Modifier.width(20.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
                         Column(verticalArrangement = Arrangement.Center) {
                             Text(
                                 text = uiState.songUIState.title,
                                 style = typo().labelMedium,
+                                color = Color.White,
                                 maxLines = 1,
                                 modifier =
                                     Modifier
@@ -1700,6 +1732,7 @@ fun NowPlayingBottomSheet(
                                         .toListName()
                                         .connectArtists(),
                                 style = typo().bodyMedium,
+                                color = Color(0xB3FFFFFF),
                                 maxLines = 1,
                                 modifier =
                                     Modifier
@@ -1709,12 +1742,13 @@ fun NowPlayingBottomSheet(
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(5.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     HorizontalDivider(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                         thickness = 1.dp,
+                        color = Color(0x26FFFFFF),
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Crossfade(targetState = onDelete != null) {
                         if (it) {
                             ActionButton(
@@ -1737,88 +1771,134 @@ fun NowPlayingBottomSheet(
                             }
                         }
                     }
-                    CheckBoxActionButton(
-                        defaultChecked = uiState.songUIState.liked,
-                        isHeartIcon = true,
-                        onChangeListener = {
-                            viewModel.onUIEvent(NowPlayingBottomSheetUIEvent.ToggleLike)
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn(animationSpec = tween(200, delayMillis = 300)) +
+                                slideInVertically(
+                                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+                                    initialOffsetY = { it / 3 }
+                                ),
+                    ) {
+                        CheckBoxActionButton(
+                            defaultChecked = uiState.songUIState.liked,
+                            isHeartIcon = true,
+                            onChangeListener = {
+                                viewModel.onUIEvent(NowPlayingBottomSheetUIEvent.ToggleLike)
+                            },
+                        )
+                    }
+                    val actionButtons = listOf<@Composable () -> Unit>(
+                        {
+                            ActionButton(
+                                icon =
+                                    when (uiState.songUIState.downloadState) {
+                                        DownloadState.STATE_NOT_DOWNLOADED -> painterResource(Res.drawable.outline_download_for_offline_24)
+                                        DownloadState.STATE_DOWNLOADING -> painterResource(Res.drawable.baseline_downloading_white)
+                                        DownloadState.STATE_DOWNLOADED -> painterResource(Res.drawable.baseline_downloaded)
+                                        DownloadState.STATE_PREPARING -> painterResource(Res.drawable.baseline_downloading_white)
+                                        else -> painterResource(Res.drawable.outline_download_for_offline_24)
+                                    },
+                                text =
+                                    when (uiState.songUIState.downloadState) {
+                                        DownloadState.STATE_NOT_DOWNLOADED -> Res.string.download
+                                        DownloadState.STATE_DOWNLOADING -> Res.string.downloading
+                                        DownloadState.STATE_DOWNLOADED -> Res.string.downloaded
+                                        DownloadState.STATE_PREPARING -> Res.string.downloading
+                                        else -> Res.string.download
+                                    },
+                            ) {
+                                viewModel.onUIEvent(NowPlayingBottomSheetUIEvent.Download)
+                            }
+                        },
+                        {
+                            ActionButton(
+                                icon = painterResource(Res.drawable.baseline_playlist_add_24),
+                                text = Res.string.add_to_a_playlist,
+                            ) {
+                                viewModel.resetPlaylists()
+                                addToAPlaylist = true
+                            }
+                        },
+                        {
+                            ActionButton(
+                                icon = painterResource(Res.drawable.play_circle),
+                                text = Res.string.play_next,
+                            ) {
+                                viewModel.onUIEvent(NowPlayingBottomSheetUIEvent.PlayNext)
+                            }
+                        },
+                        {
+                            ActionButton(
+                                icon = painterResource(Res.drawable.baseline_queue_music_24),
+                                text = Res.string.add_to_queue,
+                            ) {
+                                viewModel.onUIEvent(NowPlayingBottomSheetUIEvent.AddToQueue)
+                            }
+                        },
+                        {
+                            ActionButton(
+                                icon = painterResource(Res.drawable.baseline_people_alt_24),
+                                text = Res.string.artists,
+                            ) {
+                                artist = true
+                            }
+                        },
+                        {
+                            ActionButton(
+                                icon = painterResource(Res.drawable.baseline_album_24),
+                                text = if (uiState.songUIState.album == null) Res.string.no_album else null,
+                                textString = uiState.songUIState.album?.name,
+                                enable = uiState.songUIState.album != null,
+                            ) {
+                                uiState.songUIState.album?.id?.let { id ->
+                                    onNavigateToOtherScreen()
+                                    navController.navigate(AlbumDestination(browseId = id))
+                                }
+                            }
+                        },
+                        {
+                            ActionButton(
+                                icon = painterResource(Res.drawable.baseline_sensors_24),
+                                text = Res.string.start_radio,
+                            ) {
+                                viewModel.onUIEvent(
+                                    NowPlayingBottomSheetUIEvent.StartRadio(
+                                        videoId = uiState.songUIState.videoId,
+                                        name = "\"${uiState.songUIState.title}\" ${runBlocking { getString(Res.string.radio) }}",
+                                    ),
+                                )
+                                hideModalBottomSheet()
+                            }
                         },
                     )
-                    ActionButton(
-                        icon =
-                            when (uiState.songUIState.downloadState) {
-                                DownloadState.STATE_NOT_DOWNLOADED -> painterResource(Res.drawable.outline_download_for_offline_24)
-                                DownloadState.STATE_DOWNLOADING -> painterResource(Res.drawable.baseline_downloading_white)
-                                DownloadState.STATE_DOWNLOADED -> painterResource(Res.drawable.baseline_downloaded)
-                                DownloadState.STATE_PREPARING -> painterResource(Res.drawable.baseline_downloading_white)
-                                else -> painterResource(Res.drawable.outline_download_for_offline_24)
-                            },
-                        text =
-                            when (uiState.songUIState.downloadState) {
-                                DownloadState.STATE_NOT_DOWNLOADED -> Res.string.download
-                                DownloadState.STATE_DOWNLOADING -> Res.string.downloading
-                                DownloadState.STATE_DOWNLOADED -> Res.string.downloaded
-                                DownloadState.STATE_PREPARING -> Res.string.downloading
-                                else -> Res.string.download
-                            },
-                    ) {
-                        viewModel.onUIEvent(NowPlayingBottomSheetUIEvent.Download)
-                    }
-                    ActionButton(
-                        icon = painterResource(Res.drawable.baseline_playlist_add_24),
-                        text = Res.string.add_to_a_playlist,
-                    ) {
-                        viewModel.resetPlaylists()
-                        addToAPlaylist = true
-                    }
-                    ActionButton(
-                        icon = painterResource(Res.drawable.play_circle),
-                        text = Res.string.play_next,
-                    ) {
-                        viewModel.onUIEvent(NowPlayingBottomSheetUIEvent.PlayNext)
-                    }
-                    ActionButton(
-                        icon = painterResource(Res.drawable.baseline_queue_music_24),
-                        text = Res.string.add_to_queue,
-                    ) {
-                        viewModel.onUIEvent(NowPlayingBottomSheetUIEvent.AddToQueue)
-                    }
-                    ActionButton(
-                        icon = painterResource(Res.drawable.baseline_people_alt_24),
-                        text = Res.string.artists,
-                    ) {
-                        artist = true
-                    }
-                    ActionButton(
-                        icon = painterResource(Res.drawable.baseline_album_24),
-                        text = if (uiState.songUIState.album == null) Res.string.no_album else null,
-                        textString = uiState.songUIState.album?.name,
-                        enable = uiState.songUIState.album != null,
-                    ) {
-                        uiState.songUIState.album?.id?.let { id ->
-                            onNavigateToOtherScreen()
-                            navController.navigate(AlbumDestination(browseId = id))
+                    actionButtons.forEachIndexed { index, actionButton ->
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = fadeIn(animationSpec = tween(200, delayMillis = 340 + index * 40)) +
+                                    slideInVertically(
+                                        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+                                        initialOffsetY = { it / 3 }
+                                    ),
+                        ) {
+                            actionButton()
                         }
-                    }
-                    ActionButton(
-                        icon = painterResource(Res.drawable.baseline_sensors_24),
-                        text = Res.string.start_radio,
-                    ) {
-                        viewModel.onUIEvent(
-                            NowPlayingBottomSheetUIEvent.StartRadio(
-                                videoId = uiState.songUIState.videoId,
-                                name = "\"${uiState.songUIState.title}\" ${runBlocking { getString(Res.string.radio) }}",
-                            ),
-                        )
-                        hideModalBottomSheet()
                     }
                     Crossfade(targetState = changeMainLyricsProviderEnable) {
                         if (it) {
-                            ActionButton(
-                                icon = painterResource(Res.drawable.baseline_lyrics_24),
-                                text = Res.string.main_lyrics_provider,
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = fadeIn(animationSpec = tween(200, delayMillis = 340 + actionButtons.size * 40)) +
+                                        slideInVertically(
+                                            animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+                                            initialOffsetY = { it / 3 }
+                                        ),
                             ) {
-                                mainLyricsProvider = true
+                                ActionButton(
+                                    icon = painterResource(Res.drawable.baseline_lyrics_24),
+                                    text = Res.string.main_lyrics_provider,
+                                ) {
+                                    mainLyricsProvider = true
+                                }
                             }
                         }
                     }
@@ -1872,11 +1952,20 @@ fun NowPlayingBottomSheet(
                             }
                         }
                     }
-                    ActionButton(
-                        icon = painterResource(Res.drawable.baseline_share_24),
-                        text = Res.string.share,
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn(animationSpec = tween(200, delayMillis = 340 + (actionButtons.size + 1) * 40)) +
+                                slideInVertically(
+                                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+                                    initialOffsetY = { it / 3 }
+                                ),
                     ) {
-                        viewModel.onUIEvent(NowPlayingBottomSheetUIEvent.Share)
+                        ActionButton(
+                            icon = painterResource(Res.drawable.baseline_share_24),
+                            text = Res.string.share,
+                        ) {
+                            viewModel.onUIEvent(NowPlayingBottomSheetUIEvent.Share)
+                        }
                     }
                     EndOfModalBottomSheet()
                 }
@@ -1895,18 +1984,33 @@ fun ActionButton(
     enable: Boolean = true,
     onClick: () -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        if (isPressed) 0.97f else 1f,
+        animationSpec = spring(dampingRatio = 0.4f, stiffness = 400f),
+        label = "pressScale"
+    )
+
     Box(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .wrapContentHeight(Alignment.CenterVertically)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color(0x26FFFFFF))
+                .padding(horizontal = 16.dp, vertical = 12.dp)
                 .then(
-                    if (enable) Modifier.clickable { onClick.invoke() } else Modifier.greyScale(),
+                    if (enable) Modifier.clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = { onClick.invoke() }
+                    ) else Modifier.greyScale(),
                 ),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 20.dp),
+            modifier = Modifier.scale(scale),
         ) {
             Image(
                 painter = icon,
@@ -1914,7 +2018,7 @@ fun ActionButton(
                 modifier =
                     Modifier
                         .wrapContentSize(Alignment.Center)
-                        .padding(12.dp),
+                        .padding(end = 12.dp),
                 colorFilter =
                     if (enable) {
                         ColorFilter.tint(iconColor)
@@ -1928,7 +2032,6 @@ fun ActionButton(
                 color = if (enable) textColor ?: Color.Unspecified else Color.Gray,
                 modifier =
                     Modifier
-                        .padding(start = 10.dp)
                         .wrapContentHeight(Alignment.CenterVertically),
             )
         }
@@ -1942,21 +2045,33 @@ fun CheckBoxActionButton(
     onChangeListener: (checked: Boolean) -> Unit,
 ) {
     var stateChecked by remember { mutableStateOf(defaultChecked) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        if (isPressed) 0.97f else 1f,
+        animationSpec = spring(dampingRatio = 0.4f, stiffness = 400f),
+        label = "pressScale"
+    )
+
     Box(
         modifier =
             Modifier
-                .wrapContentSize(align = Alignment.Center)
-                .clickable {
+                .fillMaxWidth()
+                .wrapContentHeight(Alignment.CenterVertically)
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color(0x26FFFFFF))
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                ) {
                     stateChecked = !stateChecked
                     onChangeListener(stateChecked)
                 },
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier =
-                Modifier
-                    .padding(horizontal = 20.dp)
-                    .fillMaxWidth(),
+            modifier = Modifier.scale(scale),
         ) {
             Box(Modifier.padding(10.dp)) {
                 if (isHeartIcon) {
