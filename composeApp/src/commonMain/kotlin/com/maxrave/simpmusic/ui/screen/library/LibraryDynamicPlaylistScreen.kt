@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,6 +53,7 @@ import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.extension.getStringBlocking
 import com.maxrave.simpmusic.ui.component.ArtistFullWidthItems
 import com.maxrave.simpmusic.ui.component.EndOfPage
+import com.maxrave.simpmusic.ui.component.MotionBlurScroll
 import com.maxrave.simpmusic.ui.component.NowPlayingBottomSheet
 import com.maxrave.simpmusic.ui.component.PlaylistFullWidthItems
 import com.maxrave.simpmusic.ui.component.RippleIconButton
@@ -123,6 +125,9 @@ fun LibraryDynamicPlaylistScreen(
             blurEnabled = true,
         )
 
+    val scrollState = rememberLazyListState()
+    val scrollVelocity = rememberScrollVelocity(scrollState)
+
     LaunchedEffect(query) {
         Logger.w("LibraryDynamicPlaylistScreen", "Check query: $query")
         tempFavorite = favorite.filter { it.title.contains(query, ignoreCase = true) }
@@ -151,7 +156,8 @@ fun LibraryDynamicPlaylistScreen(
     }
 
     LazyColumn(
-        modifier = Modifier.hazeSource(hazeState),
+        state = scrollState,
+        modifier = Modifier.hazeSource(hazeState).motionBlur(scrollState),
         contentPadding = innerPadding,
     ) {
         item {

@@ -109,6 +109,8 @@ import com.maxrave.simpmusic.ui.component.CenterLoadingBox
 import com.maxrave.simpmusic.ui.component.DescriptionView
 import com.maxrave.simpmusic.ui.component.EndOfPage
 import com.maxrave.simpmusic.ui.component.HeartCheckBox
+import com.maxrave.simpmusic.ui.component.motionBlur
+import com.maxrave.simpmusic.ui.component.rememberScrollVelocity
 import com.maxrave.simpmusic.ui.component.LoadingDialog
 import com.maxrave.simpmusic.ui.component.NowPlayingBottomSheet
 import com.maxrave.simpmusic.ui.component.PlaylistBottomSheet
@@ -193,6 +195,7 @@ fun PlaylistScreen(
     var searchBarHeightPx by remember { mutableStateOf(0) }
 
     val lazyState = rememberLazyListState()
+    val scrollVelocity = rememberScrollVelocity(lazyState)
     val firstItemVisible by remember {
         derivedStateOf {
             lazyState.firstVisibleItemIndex == 0
@@ -1064,7 +1067,7 @@ fun PlaylistScreen(
                                                 arrayListOf(item),
                                             )
                                         },
-                                        modifier = Modifier,
+                                        modifier = Modifier.motionBlur { scrollVelocity },
                                     )
                                 } else {
                                     SongFullWidthItems(
@@ -1080,7 +1083,7 @@ fun PlaylistScreen(
                                                 arrayListOf(item),
                                             )
                                         },
-                                        modifier = Modifier,
+                                        modifier = Modifier.motionBlur { scrollVelocity },
                                     )
                                 }
                                 if (isMobilePortrait && index < filteredTrack.size - 1) {

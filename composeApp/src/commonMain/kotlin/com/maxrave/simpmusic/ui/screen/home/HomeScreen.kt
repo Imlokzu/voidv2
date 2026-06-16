@@ -98,6 +98,8 @@ import com.maxrave.simpmusic.extension.angledGradientBackground
 import com.maxrave.simpmusic.extension.isScrollingUp
 import com.maxrave.simpmusic.extension.rgbFactor
 import com.maxrave.simpmusic.ui.component.CenterLoadingBox
+import com.maxrave.simpmusic.ui.component.motionBlur
+import com.maxrave.simpmusic.ui.component.rememberScrollVelocity
 import com.maxrave.simpmusic.ui.component.Chip
 import com.maxrave.simpmusic.ui.component.DropdownButton
 import com.maxrave.simpmusic.ui.component.EndOfPage
@@ -218,6 +220,7 @@ fun HomeScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberLazyListState()
+    val scrollVelocity = rememberScrollVelocity(scrollState)
     val isScrollingUp by scrollState.isScrollingUp()
     val accountInfo by viewModel.accountInfo.collectAsStateWithLifecycle()
     val homeData by viewModel.homeItemList.collectAsStateWithLifecycle()
@@ -614,6 +617,7 @@ fun HomeScreen(
                                         HomeItem(
                                             navController = navController,
                                             data = item,
+                                            modifier = Modifier.motionBlur { scrollVelocity },
                                         )
                                     }
                                 }
@@ -646,6 +650,7 @@ fun HomeScreen(
                                         HomeItem(
                                             navController = navController,
                                             data = it,
+                                            modifier = Modifier.motionBlur { scrollVelocity },
                                         )
                                     }
                                 }
