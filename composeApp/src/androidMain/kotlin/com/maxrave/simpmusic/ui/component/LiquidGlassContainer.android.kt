@@ -74,7 +74,7 @@ actual fun Modifier.liquidGlass(
         interaction = if (interactive) interaction else null,
         // MiniPlayer (the only caller of this layer + luminance overload) is a wide surface, so the
         // shared 1.12 press scale bulges too hard; use a gentler scale here.
-        pressedScale = 1.04f,
+        pressedScale = 1.06f,
     )
 }
 
@@ -152,16 +152,16 @@ fun Modifier.drawInteractiveGlass(
                     // to white on bright backgrounds ("đục trắng"). Darkening is done in onDrawSurface.
                     brightness = 0.05f,
                     contrast = 1f,
-                    saturation = 1.5f,
+                    saturation = 1.8f,
                 )
                 blur(
                     (
                         if (l > 0f) {
-                            lerp(8f.dp.toPx(), 16f.dp.toPx(), l)
+                            lerp(16f.dp.toPx(), 32f.dp.toPx(), l)
                         } else {
-                            lerp(8f.dp.toPx(), 2f.dp.toPx(), -l)
+                            lerp(16f.dp.toPx(), 2f.dp.toPx(), -l)
                         }
-                    ) + 2f.dp.toPx() * press,
+                    ) + 4f.dp.toPx() * press,
                 )
                 // refractionHeight stays below the stadium inradius (minDimension / 2) so the
                 // top and bottom refraction never meet at the medial axis — that meeting point on
@@ -176,7 +176,7 @@ fun Modifier.drawInteractiveGlass(
             onDrawSurface = {
                 // Stay "đục đen": darken more as the background brightens so the glass never washes
                 // out to white (shared by the bottom bar capsule, search FAB and detail-screen pills).
-                val darken = lerp(0.12f, 0.5f, ((luminanceAnimation - 0.3f) / 0.5f).coerceIn(0f, 1f))
+                val darken = lerp(0.18f, 0.6f, ((luminanceAnimation - 0.3f) / 0.5f).coerceIn(0f, 1f))
                 drawRect(Color.Black.copy(alpha = darken))
                 val press = interaction?.pressProgress ?: 0f
                 if (press > 0f) {
@@ -185,7 +185,7 @@ fun Modifier.drawInteractiveGlass(
                             Brush.radialGradient(
                                 colors =
                                     listOf(
-                                        Color.White.copy(alpha = 0.18f * press),
+                                        Color.White.copy(alpha = 0.22f * press),
                                         Color.Transparent,
                                     ),
                                 center = interaction?.touchPosition ?: Offset(size.width / 2f, size.height / 2f),

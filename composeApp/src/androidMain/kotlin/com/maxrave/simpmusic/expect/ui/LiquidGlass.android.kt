@@ -43,13 +43,13 @@ actual fun Modifier.drawBackdropCustomShape(
                 // backgrounds ("đục trắng"). Darkening is done in onDrawSurface (keeps "đục đen").
                 brightness = 0.05f,
                 contrast = 1f,
-                saturation = 1.5f,
+                saturation = 1.8f,
             )
             blur(
                 if (l > 0f) {
-                    lerp(8f.dp.toPx(), 16f.dp.toPx(), l)
+                    lerp(16f.dp.toPx(), 32f.dp.toPx(), l)
                 } else {
-                    lerp(8f.dp.toPx(), 2f.dp.toPx(), -l)
+                    lerp(16f.dp.toPx(), 2f.dp.toPx(), -l)
                 },
             )
             lens(24f.dp.toPx(), size.minDimension / 2f, true)
@@ -60,7 +60,7 @@ actual fun Modifier.drawBackdropCustomShape(
         },
         shape = { shape },
         onDrawSurface = {
-            val darken = lerp(0.12f, 0.5f, ((luminanceAnimation - 0.3f) / 0.5f).coerceIn(0f, 1f))
+            val darken = lerp(0.18f, 0.6f, ((luminanceAnimation - 0.3f) / 0.5f).coerceIn(0f, 1f))
             drawRect(Color.Black.copy(alpha = darken))
         },
     )
