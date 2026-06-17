@@ -119,6 +119,8 @@ import com.maxrave.simpmusic.ui.navigation.destination.home.MoodDestination
 import com.maxrave.simpmusic.ui.navigation.destination.home.NotificationDestination
 import com.maxrave.simpmusic.ui.navigation.destination.home.RecentlySongsDestination
 import com.maxrave.simpmusic.ui.navigation.destination.home.SettingsDestination
+import com.maxrave.simpmusic.ui.navigation.destination.import.ImportDestination
+import com.maxrave.simpmusic.ui.screen.import.ImportFeatureCard
 import com.maxrave.simpmusic.ui.navigation.destination.library.LibraryDynamicPlaylistDestination
 import com.maxrave.simpmusic.ui.navigation.destination.list.ArtistDestination
 import com.maxrave.simpmusic.ui.screen.library.LibraryDynamicPlaylistType
@@ -571,6 +573,12 @@ fun HomeScreen(
                                         AccountLayout(
                                             accountName = accountInfo?.first ?: "",
                                             url = accountInfo?.second ?: "",
+                                        )
+                                        Spacer(Modifier.height(8.dp))
+                                    }
+                                    if (index == 0) {
+                                        ImportFeatureCard(
+                                            onClick = { navController.navigate(ImportDestination) },
                                         )
                                         Spacer(Modifier.height(8.dp))
                                     }

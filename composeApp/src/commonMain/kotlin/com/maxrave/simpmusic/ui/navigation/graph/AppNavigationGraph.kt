@@ -101,5 +101,10 @@ fun AppNavigationGraph(
                 showNavBar(false)
             },
         )
+        // Import screen graph
+        importScreenGraph(
+            innerPadding = innerPadding,
+            navController = navController,
+        )
     }
 }
