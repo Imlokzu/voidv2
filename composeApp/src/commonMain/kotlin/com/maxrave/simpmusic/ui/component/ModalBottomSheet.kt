@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -104,6 +105,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.RectangleShape
@@ -1263,8 +1265,8 @@ fun QueueItemBottomSheet(
                 Modifier
                     .fillMaxWidth()
                     .wrapContentHeight(),
-            shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
-            colors = CardDefaults.cardColors().copy(containerColor = Color(0xFF242424)),
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            colors = CardDefaults.cardColors().copy(containerColor = Color(0xB30E0E14)),
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -1684,61 +1686,73 @@ fun NowPlayingBottomSheet(
                             ),
                         shape = RoundedCornerShape(50),
                     ) {}
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                    // Header area with blurred cover background
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(16f / 10f)
+                            .padding(bottom = 8.dp),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        val thumb = uiState.songUIState.thumbnails
+                        // Full blurred background cover
                         AsyncImage(
-                            model =
-                                ImageRequest
-                                    .Builder(LocalPlatformContext.current)
-                                    .data(thumb)
-                                    .diskCachePolicy(CachePolicy.ENABLED)
-                                    .diskCacheKey(thumb)
-                                    .crossfade(550)
-                                    .build(),
-                            placeholder = painterResource(Res.drawable.holder),
-                            error = painterResource(Res.drawable.holder),
+                            model = ImageRequest.Builder(LocalPlatformContext.current)
+                                .data(uiState.songUIState.thumbnails)
+                                .diskCachePolicy(CachePolicy.ENABLED)
+                                .diskCacheKey(uiState.songUIState.thumbnails)
+                                .crossfade(400)
+                                .build(),
                             contentDescription = null,
-                            contentScale = ContentScale.Inside,
-                            modifier =
-                                Modifier
-                                    .align(Alignment.CenterVertically)
-                                    .shadow(8.dp, RoundedCornerShape(16.dp))
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .size(72.dp),
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.matchParentSize().clip(RoundedCornerShape(20.dp)).blur(60.dp),
                         )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column(verticalArrangement = Arrangement.Center) {
+                        // Dark gradient overlay (stronger at bottom)
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(Color(0x400A0A0F), Color(0xE60A0A0F)),
+                                    )
+                                )
+                        )
+                        // Small centered cover + title + artist
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalPlatformContext.current)
+                                    .data(uiState.songUIState.thumbnails)
+                                    .diskCachePolicy(CachePolicy.ENABLED)
+                                    .diskCacheKey(uiState.songUIState.thumbnails)
+                                    .crossfade(400)
+                                    .build(),
+                                placeholder = painterResource(Res.drawable.holder),
+                                error = painterResource(Res.drawable.holder),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(96.dp)
+                                    .shadow(12.dp, RoundedCornerShape(20.dp))
+                                    .clip(RoundedCornerShape(20.dp)),
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 text = uiState.songUIState.title,
-                                style = typo().labelMedium,
+                                style = typo().titleMedium,
                                 color = Color.White,
                                 maxLines = 1,
-                                modifier =
-                                    Modifier
-                                        .wrapContentHeight(Alignment.CenterVertically)
-                                        .basicMarquee(animationMode = MarqueeAnimationMode.Immediately)
-                                        .focusable(),
+                                modifier = Modifier.basicMarquee(animationMode = MarqueeAnimationMode.Immediately).focusable(),
                             )
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text =
-                                    uiState.songUIState.listArtists
-                                        .toListName()
-                                        .connectArtists(),
+                                text = uiState.songUIState.listArtists.toListName().connectArtists(),
                                 style = typo().bodyMedium,
                                 color = Color(0xB3FFFFFF),
                                 maxLines = 1,
-                                modifier =
-                                    Modifier
-                                        .wrapContentHeight(Alignment.CenterVertically)
-                                        .basicMarquee(animationMode = MarqueeAnimationMode.Immediately)
-                                        .focusable(),
+                                modifier = Modifier.basicMarquee(animationMode = MarqueeAnimationMode.Immediately).focusable(),
                             )
                         }
                     }
@@ -1871,16 +1885,38 @@ fun NowPlayingBottomSheet(
                             }
                         },
                     )
-                    actionButtons.forEachIndexed { index, actionButton ->
+                    val chunkedButtons = actionButtons.chunked(2)
+                    chunkedButtons.forEachIndexed { rowIndex, rowButtons ->
                         AnimatedVisibility(
                             visible = true,
-                            enter = fadeIn(animationSpec = tween(200, delayMillis = 340 + index * 40)) +
+                            enter = fadeIn(animationSpec = tween(200, delayMillis = 340 + rowIndex * 80)) +
                                     slideInVertically(
                                         animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
                                         initialOffsetY = { it / 3 }
                                     ),
                         ) {
-                            actionButton()
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                rowButtons.forEach { button ->
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(20.dp))
+                                            .background(Color(0x26FFFFFF))
+                                            .padding(12.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        button()
+                                    }
+                                }
+                                if (rowButtons.size < 2) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
                         }
                     }
                     Crossfade(targetState = changeMainLyricsProviderEnable) {
@@ -1982,6 +2018,7 @@ fun ActionButton(
     textColor: Color? = null,
     iconColor: Color = Color.White,
     enable: Boolean = true,
+    compact: Boolean = false,
     onClick: () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -1992,48 +2029,80 @@ fun ActionButton(
         label = "pressScale"
     )
 
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .wrapContentHeight(Alignment.CenterVertically)
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color(0x26FFFFFF))
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+    if (compact) {
+        // Compact mode: column layout without background wrapper
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .scale(scale)
                 .then(
                     if (enable) Modifier.clickable(
                         interactionSource = interactionSource,
                         indication = null,
                         onClick = { onClick.invoke() }
-                    ) else Modifier.greyScale(),
-                ),
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.scale(scale),
+                    ) else Modifier.greyScale()
+                )
+                .padding(4.dp),
         ) {
             Image(
                 painter = icon,
                 contentDescription = if (text != null) stringResource(text) else textString ?: "",
-                modifier =
-                    Modifier
-                        .wrapContentSize(Alignment.Center)
-                        .padding(end = 12.dp),
-                colorFilter =
-                    if (enable) {
-                        ColorFilter.tint(iconColor)
-                    } else {
-                        ColorFilter.tint(Color.Gray)
-                    },
+                modifier = Modifier.size(28.dp),
+                colorFilter = if (enable) ColorFilter.tint(iconColor) else ColorFilter.tint(Color.Gray),
             )
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = if (text != null) stringResource(text) else textString ?: "",
                 style = typo().labelSmall,
                 color = if (enable) textColor ?: Color.Unspecified else Color.Gray,
-                modifier =
-                    Modifier
-                        .wrapContentHeight(Alignment.CenterVertically),
+                maxLines = 1,
             )
+        }
+    } else {
+        // Full-width mode
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight(Alignment.CenterVertically)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0x26FFFFFF))
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .then(
+                        if (enable) Modifier.clickable(
+                            interactionSource = interactionSource,
+                            indication = null,
+                            onClick = { onClick.invoke() }
+                        ) else Modifier.greyScale(),
+                    ),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.scale(scale),
+            ) {
+                Image(
+                    painter = icon,
+                    contentDescription = if (text != null) stringResource(text) else textString ?: "",
+                    modifier =
+                        Modifier
+                            .wrapContentSize(Alignment.Center)
+                            .padding(end = 12.dp),
+                    colorFilter =
+                        if (enable) {
+                            ColorFilter.tint(iconColor)
+                        } else {
+                            ColorFilter.tint(Color.Gray)
+                        },
+                )
+                Text(
+                    text = if (text != null) stringResource(text) else textString ?: "",
+                    style = typo().labelSmall,
+                    color = if (enable) textColor ?: Color.Unspecified else Color.Gray,
+                    modifier =
+                        Modifier
+                            .wrapContentHeight(Alignment.CenterVertically),
+                )
+            }
         }
     }
 }
@@ -2043,6 +2112,7 @@ fun CheckBoxActionButton(
     defaultChecked: Boolean,
     isHeartIcon: Boolean,
     onChangeListener: (checked: Boolean) -> Unit,
+    compact: Boolean = false,
 ) {
     var stateChecked by remember { mutableStateOf(defaultChecked) }
     val interactionSource = remember { MutableInteractionSource() }
@@ -2053,39 +2123,35 @@ fun CheckBoxActionButton(
         label = "pressScale"
     )
 
-    Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .wrapContentHeight(Alignment.CenterVertically)
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color(0x26FFFFFF))
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+    if (compact) {
+        // Compact mode: column layout without background wrapper
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .scale(scale)
                 .clickable(
                     interactionSource = interactionSource,
                     indication = null,
                 ) {
                     stateChecked = !stateChecked
                     onChangeListener(stateChecked)
-                },
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.scale(scale),
+                }
+                .padding(4.dp),
         ) {
-            Box(Modifier.padding(10.dp)) {
+            Box(Modifier.padding(4.dp)) {
                 if (isHeartIcon) {
-                    HeartCheckBox(checked = stateChecked, size = 30)
+                    HeartCheckBox(checked = stateChecked, size = 28)
                 } else {
                     Crossfade(stateChecked) {
                         if (it) {
-                            Icon(Icons.Rounded.CheckCircle, "")
+                            Icon(Icons.Rounded.CheckCircle, "", modifier = Modifier.size(28.dp))
                         } else {
-                            Icon(Icons.Rounded.AddCircleOutline, "")
+                            Icon(Icons.Rounded.AddCircleOutline, "", modifier = Modifier.size(28.dp))
                         }
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text =
                     if (stateChecked) {
@@ -2094,11 +2160,58 @@ fun CheckBoxActionButton(
                         stringResource(Res.string.like)
                     },
                 style = typo().labelSmall,
-                modifier =
-                    Modifier
-                        .padding(start = 10.dp)
-                        .wrapContentHeight(Alignment.CenterVertically),
+                maxLines = 1,
             )
+        }
+    } else {
+        // Full-width mode
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight(Alignment.CenterVertically)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0x26FFFFFF))
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                    ) {
+                        stateChecked = !stateChecked
+                        onChangeListener(stateChecked)
+                    },
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.scale(scale),
+            ) {
+                Box(Modifier.padding(10.dp)) {
+                    if (isHeartIcon) {
+                        HeartCheckBox(checked = stateChecked, size = 30)
+                    } else {
+                        Crossfade(stateChecked) {
+                            if (it) {
+                                Icon(Icons.Rounded.CheckCircle, "")
+                            } else {
+                                Icon(Icons.Rounded.AddCircleOutline, "")
+                            }
+                        }
+                    }
+                }
+                Text(
+                    text =
+                        if (stateChecked) {
+                            stringResource(Res.string.liked)
+                        } else {
+                            stringResource(Res.string.like)
+                        },
+                    style = typo().labelSmall,
+                    modifier =
+                        Modifier
+                            .padding(start = 10.dp)
+                            .wrapContentHeight(Alignment.CenterVertically),
+                )
+            }
         }
     }
 }
@@ -2158,8 +2271,8 @@ fun PlaybackSpeedPitchBottomSheet(
     ) {
         Card(
             modifier = Modifier.fillMaxWidth().wrapContentHeight(),
-            shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
-            colors = CardDefaults.cardColors().copy(containerColor = Color(0xFF242424)),
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            colors = CardDefaults.cardColors().copy(containerColor = Color(0xB30E0E14)),
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,

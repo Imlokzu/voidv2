@@ -862,7 +862,7 @@ fun AlbumScreen(
                                             arrayListOf(item),
                                         )
                                     },
-                                    modifier = Modifier.motionBlur { scrollVelocity },
+                                    modifier = Modifier.motionBlur(scrollVelocity),
                                 )
                                 if (isMobilePortrait && index < uiState.trackCount - 1) {
                                     HorizontalDivider(

@@ -1067,7 +1067,7 @@ fun PlaylistScreen(
                                                 arrayListOf(item),
                                             )
                                         },
-                                        modifier = Modifier.motionBlur { scrollVelocity },
+                                        modifier = Modifier.motionBlur(scrollVelocity),
                                     )
                                 } else {
                                     SongFullWidthItems(
@@ -1083,7 +1083,7 @@ fun PlaylistScreen(
                                                 arrayListOf(item),
                                             )
                                         },
-                                        modifier = Modifier.motionBlur { scrollVelocity },
+                                        modifier = Modifier.motionBlur(scrollVelocity),
                                     )
                                 }
                                 if (isMobilePortrait && index < filteredTrack.size - 1) {

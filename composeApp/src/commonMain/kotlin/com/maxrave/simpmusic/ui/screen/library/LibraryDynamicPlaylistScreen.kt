@@ -53,7 +53,8 @@ import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.extension.getStringBlocking
 import com.maxrave.simpmusic.ui.component.ArtistFullWidthItems
 import com.maxrave.simpmusic.ui.component.EndOfPage
-import com.maxrave.simpmusic.ui.component.MotionBlurScroll
+import com.maxrave.simpmusic.ui.component.motionBlur
+import com.maxrave.simpmusic.ui.component.rememberScrollVelocity
 import com.maxrave.simpmusic.ui.component.NowPlayingBottomSheet
 import com.maxrave.simpmusic.ui.component.PlaylistFullWidthItems
 import com.maxrave.simpmusic.ui.component.RippleIconButton
@@ -157,7 +158,7 @@ fun LibraryDynamicPlaylistScreen(
 
     LazyColumn(
         state = scrollState,
-        modifier = Modifier.hazeSource(hazeState).motionBlur(scrollState),
+        modifier = Modifier.hazeSource(hazeState).motionBlur(scrollVelocity),
         contentPadding = innerPadding,
     ) {
         item {

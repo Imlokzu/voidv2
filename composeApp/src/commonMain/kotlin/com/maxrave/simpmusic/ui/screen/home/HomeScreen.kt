@@ -614,11 +614,12 @@ fun HomeScreen(
                                             )
                                         }
                                     } else {
+                                    Box(Modifier.motionBlur(scrollVelocity)) {
                                         HomeItem(
                                             navController = navController,
                                             data = item,
-                                            modifier = Modifier.motionBlur { scrollVelocity },
                                         )
+                                    }
                                     }
                                 }
                             }
@@ -645,12 +646,12 @@ fun HomeScreen(
                                     Box(
                                         modifier =
                                             Modifier
-                                                .padding(horizontal = 15.dp),
+                                                .padding(horizontal = 15.dp)
+                                                .motionBlur(scrollVelocity),
                                     ) {
                                         HomeItem(
                                             navController = navController,
                                             data = it,
-                                            modifier = Modifier.motionBlur { scrollVelocity },
                                         )
                                     }
                                 }
